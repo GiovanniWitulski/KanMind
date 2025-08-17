@@ -9,30 +9,41 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'fullname']
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
-    repeated_password = serializers.CharField(write_only=True)
+class UserDetailSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['user','email', 'password', 'repeated_password']
+        fields = ['id', 'email', 'fullname']
+    
+    def get_fullname(self, obj):
+        try:
+            return obj.userprofile.fullname
+        except UserProfile.DoesNotExist:
+            return f"{obj.first_name} {obj.last_name}".strip()
+
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    repeated_password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'repeated_password']
         extra_kwargs = {
-            'password': {
-                'write_only': True
-            }
+            'password': {'write_only': True}
         }
 
-    def save(self):
-        pw = self.validated_data['password']
-        repeated_pw = self.validated_data['repeated_password']
-        email = self.validated_data['email']
-
-        if pw != repeated_pw:
+    def validate(self, data):
+        if data['password'] != data['repeated_password']:
             raise serializers.ValidationError({'error': 'Passwords do not match.'})
-        if User.objects.filter(email=email).exists():
+
+        if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError({'error': 'A user with this email already exists.'})
         
-        account = User(email=email, username=self.validated_data['username'])
-        account.set_password(pw)
-        account.save()
-        return account
+        return data
 
+    def create(self, validated_data):
+        validated_data.pop('repeated_password')
+        account = User.objects.create_user(**validated_data)
+        
+        return account
