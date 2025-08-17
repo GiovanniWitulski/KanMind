@@ -3,7 +3,6 @@ from django.conf import settings
 
 
 class Task(models.Model):
-
     class Status(models.TextChoices):
         TODO = 'to-do', 'To Do'
         IN_PROGRESS = 'in-progress', 'In Progress'
