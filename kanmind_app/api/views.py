@@ -1,8 +1,9 @@
-from rest_framework import viewsets, permissions, status 
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from ..models import Board, Task
-from .serializers import TaskSerializer, BoardSerializer, BoardUpdateSerializer, BoardDetailSerializer
+from .serializers import TaskSerializer, BoardSerializer, BoardUpdateSerializer, BoardDetailSerializer, TaskDetailSerializer
 from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard
 
 class BoardViewSet(viewsets.ModelViewSet):
@@ -52,3 +53,17 @@ class TaskViewSet(viewsets.ModelViewSet):
         accessible_boards = Board.objects.filter(Q(owner=user) | Q(members=user))
         return Task.objects.filter(board__in=accessible_boards)
     
+    @action(detail=False, methods=['get'])
+    def assigned_to_me(self, request):
+        user = self.request.user
+        tasks = Task.objects.filter(assignee=user)
+        serializer = TaskDetailSerializer(tasks, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+        
+    @action(detail=False, methods=['get'])
+    def reviews_for_me(self, request):
+        user = self.request.user
+        tasks = Task.objects.filter(reviewer=user)
+        serializer = TaskDetailSerializer(tasks, many=True, context={'request': request})
+        return Response(serializer.data)
