@@ -24,10 +24,35 @@ class TaskSerializer(serializers.ModelSerializer):
     assignee = UserSerializer(read_only=True)
     reviewer = UserSerializer(read_only=True)
 
+    assignee_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), 
+        source='assignee', 
+        write_only=True,
+        required=False,
+        allow_null=True   
+    )
+
+    reviewer_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), 
+        source='reviewer', 
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Task
         fields = '__all__'
 
+
+class TaskDetailSerializer(serializers.ModelSerializer):
+    assignee = UserDetailSerializer(read_only=True)
+    reviewer = UserDetailSerializer(read_only=True)
+    
+    class Meta:
+        model = Task
+        fields = '__all__'
+    
 
 class BoardSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
@@ -61,12 +86,6 @@ class BoardSerializer(serializers.ModelSerializer):
         return obj.tasks.filter(priority=Task.Priority.HIGH).count()
 
 
-# class BoardCreateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Board
-#         fields = ['title', 'members']
-
-
 class BoardUpdateSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -83,12 +102,14 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
 class BoardDetailSerializer(serializers.ModelSerializer):
     owner_data = UserDetailSerializer(source='owner', read_only=True)
     members_data = UserDetailSerializer(source='members', many=True, read_only=True)
+    tasks = TaskSerializer(many=True, read_only=True)
 
     class Meta:
         model = Board
         fields = [
             'id', 
             'title', 
+            'tasks',
             'owner_data',
             'members_data',
         ]
