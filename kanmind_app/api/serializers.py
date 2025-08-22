@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from ..models import Board, Task
+from ..models import Board, Task, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,6 +23,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     assignee = UserSerializer(read_only=True)
     reviewer = UserSerializer(read_only=True)
+    comments_count = serializers.IntegerField()
 
     assignee_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), 
@@ -107,9 +108,39 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = [
-            'id', 
-            'title', 
+            'id',
+            'title',
             'tasks',
             'owner_data',
             'members_data',
         ]
+
+
+class CommentAuthorSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['author']
+
+    def get_author(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Comment
+        fields = ['id', 'created_at', 'author', 'content']
+    
+    def get_author(self, obj):
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username
+    
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['content']
