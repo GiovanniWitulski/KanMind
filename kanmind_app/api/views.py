@@ -63,7 +63,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
         
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='reviewing')
     def reviews_for_me(self, request):
         user = self.request.user
         tasks = Task.objects.filter(reviewer=user)
