@@ -11,5 +11,5 @@ tasks_router.register(r'comments', views.CommentViewSet, basename='task-comments
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(tasks_router.urls)), 
+    path('', include(tasks_router.urls)),
 ]
