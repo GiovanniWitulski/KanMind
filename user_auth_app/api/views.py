@@ -1,6 +1,6 @@
 from rest_framework import generics, status, permissions
 from user_auth_app.models import UserProfile
-from .serializers import UserProfileSerializer, RegistrationSerializer, UserDetailSerializer
+from .serializers import UserProfileSerializer, RegistrationSerializer, UserDetailSerializer, CustomAuthTokenSerializer
 from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -28,35 +28,39 @@ class RegistrationView(APIView):
         saved_account = serializer.save()
 
         token, created = Token.objects.get_or_create(user=saved_account)
-        
         data = {
             'token': token.key,
-            'username': saved_account.username,
+            'fullname': saved_account.userprofile.fullname,
             'email': saved_account.email,
+            'user_id': saved_account.id
         }
         
         return Response(data, status=status.HTTP_201_CREATED)
     
 class LoginView(ObtainAuthToken):
     permission_classes = [AllowAny]
+    serializer_class = CustomAuthTokenSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         
-        data =  {}
         if serializer.is_valid():
             user = serializer.validated_data['user']
             token, created = Token.objects.get_or_create(user=user)
+            try:
+                fullname = user.userprofile.fullname
+            except UserProfile.DoesNotExist:
+                fullname = user.get_full_name()
+
             data = {
                 'token': token.key,
-                'username': user.username,
-                'email': user.email
+                'fullname': fullname,
+                'email': user.email,
+                'user_id': user.id
             }
+            return Response(data)
         else:
-            data=serializer.errors
-
-        return Response(data)
-    
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailCheckView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -65,19 +69,12 @@ class EmailCheckView(APIView):
         email = request.query_params.get('email', None)
 
         if not email:
-            return Response(
-                {"error": "Der 'email' Query-Parameter fehlt."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
-
-            return Response(
-                {"error": "E-Mail nicht gefunden. Der Benutzer existiert nicht."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        serializer = UserDetailSerializer(user)
+            return Response(status=status.HTTP_404_NOT_FOUND)
         
+        serializer = UserDetailSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
