@@ -55,15 +55,6 @@ class TaskSerializer(serializers.ModelSerializer):
             'assignee_id', 'reviewer_id', 'board_id'
         ]
         read_only_fields = ['board']
-
-
-class TaskDetailSerializer(serializers.ModelSerializer):
-    assignee = UserDetailSerializer(read_only=True)
-    reviewer = UserDetailSerializer(read_only=True)
-    
-    class Meta:
-        model = Task
-        fields = '__all__'
     
 
 class BoardSerializer(serializers.ModelSerializer):
@@ -149,9 +140,3 @@ class CommentSerializer(serializers.ModelSerializer):
         if obj.author.first_name and obj.author.last_name:
             return f"{obj.author.first_name} {obj.author.last_name}"
         return obj.author.username
-    
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ['content']

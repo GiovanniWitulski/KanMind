@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q, Count 
 from ..models import Board, Task, Comment 
-from .serializers import TaskSerializer, BoardSerializer, BoardUpdateSerializer, BoardDetailSerializer, TaskDetailSerializer, CommentSerializer, CommentCreateSerializer 
+from .serializers import TaskSerializer, BoardSerializer, BoardUpdateSerializer, BoardDetailSerializer,  CommentSerializer 
 from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAuthorOrReadOnly, CanDeleteTask 
 
 class BoardViewSet(viewsets.ModelViewSet):
@@ -64,7 +64,6 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
 
     def get_permissions(self):
-
         if self.action == 'destroy':
             permission_classes = [permissions.IsAuthenticated, CanDeleteTask]
         else:
