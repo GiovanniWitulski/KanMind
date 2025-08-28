@@ -87,21 +87,24 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         serializer.save(created_by=self.request.user)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='assigned-to-me')
     def assigned_to_me(self, request):
-        user = self.request.user
-        tasks = self.get_queryset().filter(assignee=user)
+        user = request.user
+        tasks = Task.objects.filter(assignee=user).annotate(
+            comments_count=Count('comments')
+        )
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'], url_path='reviewing')
     def reviews_for_me(self, request):
-        user = self.request.user
-        tasks = self.get_queryset().filter(reviewer=user) 
+        user = request.user
+        tasks = Task.objects.filter(reviewer=user).annotate(
+            comments_count=Count('comments')
+        )
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
     
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
