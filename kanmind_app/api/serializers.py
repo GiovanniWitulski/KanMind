@@ -25,23 +25,21 @@ class TaskSerializer(serializers.ModelSerializer):
     reviewer = UserDetailSerializer(read_only=True)
     comments_count = serializers.IntegerField(read_only=True)
 
-    board_id = serializers.PrimaryKeyRelatedField(
+    board = serializers.PrimaryKeyRelatedField(
         queryset=Board.objects.all(),
-        source='board',
         write_only=True
     )
 
     assignee_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), 
-        source='assignee', 
+        queryset=User.objects.all(),
+        source='assignee',
         write_only=True,
         required=False,
-        allow_null=True   
+        allow_null=True           
     )
-
     reviewer_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), 
-        source='reviewer', 
+        queryset=User.objects.all(),
+        source='reviewer',
         write_only=True,
         required=False,
         allow_null=True
@@ -104,7 +102,7 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
 
 class BoardDetailSerializer(serializers.ModelSerializer):
     owner_data = UserDetailSerializer(source='owner', read_only=True)
-    members_data = UserDetailSerializer(source='members', many=True, read_only=True)
+    members = UserDetailSerializer(many=True, read_only=True)
     tasks = TaskSerializer(many=True, read_only=True)
 
     class Meta:
@@ -114,7 +112,7 @@ class BoardDetailSerializer(serializers.ModelSerializer):
             'title',
             'tasks',
             'owner_data',
-            'members_data',
+            'members',
         ]
 
 
