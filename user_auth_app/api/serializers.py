@@ -32,10 +32,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['fullname', 'email', 'password', 'repeated_password']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'email': {'required': True} 
         }
 
     def validate(self, data):
+        if 'email' not in data or not data['email']:
+            raise serializers.ValidationError({'error': 'Email field is required.'})
+
         if data['password'] != data['repeated_password']:
             raise serializers.ValidationError({'error': 'Passwords do not match.'})
 
@@ -50,10 +54,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
             username=validated_data['email'],
             password=validated_data['password']
         )
+
+        fullname = validated_data.get('fullname', '').split()
+        account.first_name = fullname[0] if fullname else ''
+        account.last_name = ' '.join(fullname[1:]) if len(fullname) > 1 else ''
+        account.save()
         
         UserProfile.objects.create(
             user=account,
-            fullname=validated_data['fullname']
+            fullname=validated_data.get('fullname', '')
         )
         
         return account
