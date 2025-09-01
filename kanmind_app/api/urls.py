@@ -1,15 +1,19 @@
 from django.urls import path, include
-from rest_framework_nested import routers
+from rest_framework.routers import DefaultRouter, SimpleRouter
 from . import views
 
-router = routers.DefaultRouter()
-router.register(r'boards', views.BoardViewSet, basename='board')
-router.register(r'tasks', views.TaskViewSet, basename='task')
+router = DefaultRouter()
 
-tasks_router = routers.NestedDefaultRouter(router, r'tasks', lookup='task')
-tasks_router.register(r'comments', views.CommentViewSet, basename='task-comments')
+comment_router = SimpleRouter()
+comment_router.register(r'comments', views.CommentViewSet, basename='task-comments')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(tasks_router.urls)),
+    path('boards/', views.BoardListCreateView.as_view(), name='board-list-create'),
+    path('boards/<int:pk>/', views.BoardDetailView.as_view(), name='board-detail'),
+    path('tasks/', views.TaskListCreateView.as_view(), name='task-list-create'),
+    path('tasks/<int:pk>/', views.TaskDetailView.as_view(), name='task-detail'),
+    path('tasks/assigned-to-me/', views.AssignedToMeTasksView.as_view(), name='tasks-assigned-to-me'),
+    path('tasks/reviewing/', views.ReviewingTasksView.as_view(), name='tasks-reviewing'),
+    path('tasks/<int:task_pk>/', include(comment_router.urls)),
 ]
