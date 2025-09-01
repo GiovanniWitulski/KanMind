@@ -81,9 +81,9 @@ class CustomAuthTokenSerializer(serializers.Serializer):
                                 username=email, password=password)
 
             if not user:
-                raise serializers.ValidationError(code='authorization')
+                raise serializers.ValidationError({'error': 'Wrong email or Password'})
         else:
-            raise serializers.ValidationError(code='authorization')
+            raise serializers.ValidationError({'error': 'authorization failed'})
 
         attrs['user'] = user
         return attrs
