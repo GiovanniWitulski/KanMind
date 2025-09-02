@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions, generics, mixins
 from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q, Count 
+from django.db.models import Q, Count, Prefetch
 from ..models import Board, Task, Comment 
 from .serializers import BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer, TaskSerializer, CommentSerializer 
 from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAuthorOrReadOnly, CanDeleteTask 
@@ -8,6 +8,10 @@ from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAu
 class BoardListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
     serializer_class = BoardSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
 
     def perform_create(self, serializer):
         board_instance = serializer.save(owner=self.request.user)
@@ -25,7 +29,12 @@ class BoardDetailView(generics.GenericAPIView,
                       mixins.UpdateModelMixin,
                       mixins.DestroyModelMixin):
     
-    queryset = Board.objects.all() 
+    def get_queryset(self):
+        tasks_with_comment_count = Task.objects.annotate(
+            comments_count=Count('comments')
+        )
+        prefetch_tasks = Prefetch('tasks', queryset=tasks_with_comment_count)
+        return Board.objects.prefetch_related(prefetch_tasks) 
 
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:

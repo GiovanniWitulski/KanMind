@@ -60,7 +60,7 @@ class BoardSerializer(serializers.ModelSerializer):
     ticket_count = serializers.SerializerMethodField()
     tasks_to_do_count = serializers.SerializerMethodField()
     tasks_high_prio_count = serializers.SerializerMethodField()
-    owner_id = serializers.IntegerField(source='owner.id')
+    owner_id = serializers.IntegerField(source='owner.id', read_only=True)
 
     class Meta:
         model = Board
