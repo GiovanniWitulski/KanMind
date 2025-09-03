@@ -1,9 +1,11 @@
 from rest_framework import viewsets, permissions, generics, mixins
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, status
+from rest_framework.response import Response
 from django.db.models import Q, Count, Prefetch
+from django.shortcuts import get_object_or_404
 from ..models import Board, Task, Comment 
-from .serializers import BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer, TaskSerializer, CommentSerializer 
-from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAuthorOrReadOnly, CanDeleteTask 
+from .serializers import BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer, TaskSerializer, CommentSerializer
+from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAuthorOrReadOnly, CanDeleteTask, CanAccessTaskComments
 
 class BoardListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
     serializer_class = BoardSerializer
@@ -84,6 +86,15 @@ class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
         return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        board_id = request.data.get('board')
+        if not board_id:
+            return Response({"board": "This field is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        board = get_object_or_404(Board, pk=board_id)
+
+        user = request.user
+        if not (board.owner == user or user in board.members.all()):
+             raise PermissionDenied("You don't have permission to create a task on this board.")
         return self.create(request, *args, **kwargs)
     
 
@@ -133,15 +144,18 @@ class ReviewingTasksView(generics.ListAPIView):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, CanAccessTaskComments, IsAuthorOrReadOnly]
+
+    def get_task(self):
+        task_pk = self.kwargs['task_pk']
+        task = get_object_or_404(Task, pk=task_pk)
+        return task
 
     def get_queryset(self):
-        task_pk = self.kwargs['task_pk']
-        return Comment.objects.filter(task_id=task_pk)
+        task = self.get_task()
+        return Comment.objects.filter(task=task)
 
     def perform_create(self, serializer):
-        task_pk = self.kwargs['task_pk']
-        task = Task.objects.get(pk=task_pk)
+        task = self.get_task()
         serializer.save(author=self.request.user, task=task)
