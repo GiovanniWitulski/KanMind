@@ -27,7 +27,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
     board = serializers.PrimaryKeyRelatedField(
         queryset=Board.objects.all(),
-        write_only=True
     )
 
     assignee_id = serializers.PrimaryKeyRelatedField(
@@ -50,9 +49,8 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'board', 'title', 'description', 'status', 'priority', 
             'due_date', 'assignee', 'reviewer', 'comments_count', 
-            'assignee_id', 'reviewer_id', 'board_id'
+            'assignee_id', 'reviewer_id'
         ]
-        read_only_fields = ['board']
     
 
 class BoardSerializer(serializers.ModelSerializer):
