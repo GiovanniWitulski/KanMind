@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from ..models import Task
 
 class IsOwnerOrMember(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
@@ -23,3 +24,14 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 class CanDeleteTask(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.created_by == request.user or obj.board.owner == request.user
+    
+class CanAccessTaskComments(permissions.BasePermission):
+    def has_permission(self, request, view):
+        try:
+            task = Task.objects.get(pk=view.kwargs['task_pk'])
+        except Task.DoesNotExist:
+            return True
+
+        user = request.user
+        board = task.board
+        return board.owner == user or user in board.members.all()
