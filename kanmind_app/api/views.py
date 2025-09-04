@@ -104,7 +104,12 @@ class TaskDetailView(mixins.RetrieveModelMixin,
                      generics.GenericAPIView):
 
     serializer_class = TaskSerializer
-    queryset = Task.objects.all() 
+    def get_queryset(self):
+        user = self.request.user
+        accessible_boards = Board.objects.filter(Q(owner=user) | Q(members=user))
+        return Task.objects.filter(board__in=accessible_boards).annotate(
+            comments_count=Count('comments')
+        )
 
     def get_permissions(self):
         if self.request.method == 'DELETE':
