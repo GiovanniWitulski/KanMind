@@ -97,6 +97,18 @@ class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
              raise PermissionDenied("You don't have permission to create a task on this board.")
         return self.create(request, *args, **kwargs)
     
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        instance = serializer.instance
+        refreshed_instance = self.get_queryset().get(pk=instance.pk)
+        response_serializer = self.get_serializer(refreshed_instance)
+        headers = self.get_success_headers(serializer.data)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 
 class TaskDetailView(mixins.RetrieveModelMixin,
                      mixins.UpdateModelMixin,
