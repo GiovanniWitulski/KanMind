@@ -109,7 +109,6 @@ class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-
 class TaskDetailView(mixins.RetrieveModelMixin,
                      mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
@@ -117,9 +116,7 @@ class TaskDetailView(mixins.RetrieveModelMixin,
 
     serializer_class = TaskSerializer
     def get_queryset(self):
-        user = self.request.user
-        accessible_boards = Board.objects.filter(Q(owner=user) | Q(members=user))
-        return Task.objects.filter(board__in=accessible_boards).annotate(
+        return Task.objects.annotate(
             comments_count=Count('comments')
         )
 
