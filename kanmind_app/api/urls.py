@@ -5,7 +5,7 @@ from . import views
 router = DefaultRouter()
 
 comment_router = SimpleRouter()
-comment_router.register(r'comments', views.CommentViewSet, basename='task-comments')
+comment_router.register(r'', views.CommentViewSet, basename='task-comments')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -15,5 +15,5 @@ urlpatterns = [
     path('tasks/<int:pk>/', views.TaskDetailView.as_view(), name='task-detail'),
     path('tasks/assigned-to-me/', views.AssignedToMeTasksView.as_view(), name='tasks-assigned-to-me'),
     path('tasks/reviewing/', views.ReviewingTasksView.as_view(), name='tasks-reviewing'),
-    path('tasks/<int:task_pk>/', include(comment_router.urls)),
+    path('tasks/<int:task_pk>/comments/', include(comment_router.urls)),
 ]
