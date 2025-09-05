@@ -28,8 +28,8 @@ class CanDeleteTask(permissions.BasePermission):
 class CanAccessTaskComments(permissions.BasePermission):
     def has_permission(self, request, view):
         try:
-            task = Task.objects.get(pk=view.kwargs['task_pk'])
-        except Task.DoesNotExist:
+            task = view.get_task()
+        except AttributeError:
             return False
 
         user = request.user
