@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from ..models import Task
 
 class IsOwnerOrMember(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
