@@ -90,9 +90,16 @@ class BoardUpdateSerializer(serializers.ModelSerializer):
     members_data = UserDetailSerializer(source='members', many=True, read_only=True)
     title = serializers.CharField(required=False)
 
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        write_only=True, 
+        required=False
+    )
+
     class Meta:
         model = Board
-        fields = ['id', 'title', 'owner_data', 'members_data']
+        fields = ['id', 'title', 'owner_data', 'members_data', 'members']
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):
