@@ -7,7 +7,7 @@ from ..models import Board, Task, Comment
 from .serializers import BoardSerializer, BoardDetailSerializer, BoardUpdateSerializer, TaskSerializer, CommentSerializer
 from .permissions import IsOwnerOrMember, IsOwner, IsTaskOnAccessibleBoard, IsAuthorOrReadOnly, CanDeleteTask, CanAccessTaskComments
 
-class BoardListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
+class BoardListCreateView(generics.ListCreateAPIView):
     serializer_class = BoardSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -19,17 +19,8 @@ class BoardListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins
         board_instance = serializer.save(owner=self.request.user)
         board_instance.members.add(self.request.user)
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-
-class BoardDetailView(generics.GenericAPIView,
-                      mixins.RetrieveModelMixin,
-                      mixins.UpdateModelMixin,
-                      mixins.DestroyModelMixin):
+class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_queryset(self):
         tasks_with_comment_count = Task.objects.annotate(
@@ -48,20 +39,8 @@ class BoardDetailView(generics.GenericAPIView,
             return [permissions.IsAuthenticated(), IsOwner()]
         return [permissions.IsAuthenticated(), IsOwnerOrMember()]
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
 
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)    
-
-
-class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
+class TaskListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated, IsTaskOnAccessibleBoard]
 
@@ -81,9 +60,6 @@ class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
             raise PermissionDenied("You don't have permission to create a task on this board.")
         
         serializer.save(created_by=self.request.user)
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         board_id = request.data.get('board')
@@ -109,10 +85,7 @@ class TaskListCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.
         return Response(response_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class TaskDetailView(mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     mixins.DestroyModelMixin,
-                     generics.GenericAPIView):
+class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = TaskSerializer
     def get_queryset(self):
@@ -124,18 +97,6 @@ class TaskDetailView(mixins.RetrieveModelMixin,
         if self.request.method == 'DELETE':
             return [permissions.IsAuthenticated(), CanDeleteTask()]
         return [permissions.IsAuthenticated(), IsTaskOnAccessibleBoard()]
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
 
 
 class AssignedToMeTasksView(generics.ListAPIView):
