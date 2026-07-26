@@ -5,7 +5,7 @@ Kanmind is the backend for a collaborative Kanban board application. It's a REST
 
 -----
 
-## ✨ Features
+## Features
 
   * **User Authentication**: Secure registration and token-based login.
   * **Board Management**: Create, view, update, and delete Kanban boards (CRUD).
@@ -17,7 +17,7 @@ Kanmind is the backend for a collaborative Kanban board application. It's a REST
 
 -----
 
-## 🚀 Setup and Installation
+## Setup and Installation
 
 Follow these steps to set up and run the project locally.
 
@@ -70,7 +70,7 @@ The server will now be running at `http://127.0.0.1:8000/`.
 
 -----
 
-## 🔧 Configuration
+## Configuration
 
   * **SECRET\_KEY**: The `SECRET_KEY` is currently hardcoded in `kanmind_hub/settings.py`. For a production environment, this should be moved to an environment variable.
 
